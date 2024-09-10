@@ -1,22 +1,20 @@
 package com.andersonlopez.futecaManager.DTO;
 
-import jakarta.persistence.Column;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
 public class UserRegisterDTO {
-    @NotBlank(message = "El nombre no puede estar vacio")
+    @NotBlank(message = "El nombre no puede ir vacío")
     private String name;
-    @NotBlank(message = "El apellido no puede estar vacio")
+    @NotBlank(message = "El apellido no puede ir vacío")
     private String surname;
-    @NotBlank(message = "El nombre de usuario no puede estar vacio")
-    @Column(unique = true)
+    @NotBlank(message = "El nombre de usuario no puede ir vacío")
     private String username;
-    @NotBlank(message = "El correo no puede estar vacio")
-    @Column(unique = true)
+    @Email
+    @NotBlank(message = "El correo no puede ir vacío")
     private String email;
-    @NotBlank(message = "La password no puede estar vacia")
+    @NotBlank(message = "La password no puede ir vacía")
     private String password;
-    
 }

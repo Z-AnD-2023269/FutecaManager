@@ -1,5 +1,18 @@
 package com.andersonlopez.futecaManager.controller;
 
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.andersonlopez.futecaManager.DTO.UserLoginDTO;
+import com.andersonlopez.futecaManager.DTO.UserRegisterDTO;
+import com.andersonlopez.futecaManager.models.User;
+import com.andersonlopez.futecaManager.service.CloudinaryService;
+import com.andersonlopez.futecaManager.service.UserService;
+
+import jakarta.validation.Valid;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,119 +23,112 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-
-import com.andersonlopez.futecaManager.DTO.UserLoginDTO;
-import com.andersonlopez.futecaManager.DTO.UserRegisterDTO;
-import com.andersonlopez.futecaManager.models.User;
-import com.andersonlopez.futecaManager.service.CloudinaryService;
-import com.andersonlopez.futecaManager.service.UserService;
-import com.andersonlopez.futecaManager.utils.BCryptSecurity;
-
-import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 
-
-@RestController // @Controller @RequestBody
-@RequestMapping("/futecaManager/v1/auth")
+@RestController //@Controller @ResponseBody
+@RequestMapping("/futecaManager/v1/auth") //Ruta general
 public class UserController {
 
+    //Inyectar la dependencia del servicio
     @Autowired
     UserService userService;
 
     @Autowired
     CloudinaryService cloudinaryService;
 
-    @Autowired
-    BCryptSecurity bCryptSecurity;
-
+    //Rutas específicas
+    /**
+     * Método para listar usuarios
+     * @return ResponseEntity con las diferentes respuestas de error y la respuesta correcta
+     */
     @GetMapping()
     public ResponseEntity<?> getMethodName() {
         Map<String, Object> res = new HashMap<>();
-        try {
-            return ResponseEntity.ok().body(userService.listUser());
-
+        try { 
+            return ResponseEntity.ok().body(userService.listUsers());
+            //Error de conexión a la BD
         } catch (CannotCreateTransactionException err) {
-            res.put("menssage", "Error al momento de conectarse a la DB");
+            res.put("message", "Error al momento de conectarse a la BD");
             res.put("Error", err.getMessage().concat(err.getMostSpecificCause().getMessage()));
             return ResponseEntity.status(503).body(res);
-
+            //Error de consulta a la BD
         } catch (DataAccessException err) {
             res.put("message", "Error al momento de consultar a la base de datos");
             res.put("Error", err.getMessage().concat(err.getMostSpecificCause().getMessage()));
             return ResponseEntity.status(503).body(res);
-
+            //Error general o genérico
         } catch (Exception err) {
             res.put("message", "Error general al obtener los datos");
             res.put("Error", err.getMessage());
-            return ResponseEntity.status(503).body(res);
+            return ResponseEntity.internalServerError().body(res);
         }
     }
-    // Data transfer object /
+
+    //Data transfer object / patron de diseño que sirve para transoportar datos entre diferenetes capas.
 
     @PostMapping("/register")
     public ResponseEntity<?> register(
-            @RequestPart("profilePicture") MultipartFile profilePicture,
-            @Valid @ModelAttribute UserRegisterDTO user,
-            BindingResult result) {
+        @RequestPart("profilePicture") MultipartFile profilePicture,
+        //Multipart-formdata
+        //@Valid ejecuta todas las validaciones del modelo DTO
+        @Valid @ModelAttribute UserRegisterDTO user,
+        //BindingResult captura los errores si en tal caso no pasa las validaciones
+        BindingResult result
+    ) {
         Map<String, Object> res = new HashMap<>();
-        if (result.hasErrors()) {
+        if(result.hasErrors()){
             List<String> errors = result.getFieldErrors()
-                    .stream()
-                    .map(error -> error.getDefaultMessage())
-                    .collect(Collectors.toList());
-
-            res.put("mesage", "Error en las validaciones por favor ingresa todos los campos");
-            res.put("Errors", errors);
-            return ResponseEntity.badRequest().body(res);
+                .stream()
+                .map(error -> error.getDefaultMessage())
+                .collect(Collectors.toList());
+                res.put("message", "Error con las validaciones, por favor ingresa todos los campos");
+                res.put("Errors", errors);
+                return ResponseEntity.badRequest().body(res);
         }
         try {
-            Map<String, Object> uploadResult = cloudinaryService.uploadProfilePicture(profilePicture, "profilesFuteca");
+            //Utilizar el servicio de Cloudinary para subir la imagen que manda el usuario
+            Map<String,Object> uploadResult = cloudinaryService.uploadProfilePicture(profilePicture, "profilesFuteca");
             String img = uploadResult.get("url").toString();
             Long id = null;
             User newUser = new User(
-                    id,
-                    user.getName(),
-                    user.getSurname(),
-                    user.getUsername(),
-                    user.getEmail(),
-                    bCryptSecurity.encodePassword(user.getPassword()),
-                    img);
-            userService.registrer(newUser);
-            res.put("message", "Usuario recibido correctamente");
+                id,
+                user.getName(),
+                user.getSurname(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword(),
+                img
+            );
+            userService.register(newUser);
+            res.put("message", "Usuario guardado correctamente");
             return ResponseEntity.ok(res);
         } catch (Exception err) {
             res.put("message", "Error al guardar el usuario, intente de nuevo más tarde");
             res.put("error", err.getMessage());
             return ResponseEntity.internalServerError().body(res);
         }
-
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginDTO user) {
         Map<String, Object> res = new HashMap<>();
-        try{
+        try {
+            System.out.println(user.getPassword());
             if(userService.login(user.getUsername(), user.getPassword())){
-                res.put("message", "Usuario Logeado satisfactoriamente");
+                res.put("message", "Usuario logeado satisfactoriamente");
                 return ResponseEntity.ok(res);
             }else{
-                res.put("message", "Credenciales inavlidas");
+                res.put("message", "Credenciales inválidas");
                 return ResponseEntity.status(401).body(res);
             }
-
-        }catch(Exception err){
-            res.put("message", "Error genereal al iniciars esion");
+        } catch (Exception err) {
+            res.put("message", "Error general al iniciar sesión");
             res.put("error", err);
             return ResponseEntity.internalServerError().body(res);
-
         }
     }
-    
+     
 }

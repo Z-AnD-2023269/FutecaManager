@@ -17,21 +17,21 @@ import lombok.Data;
 
 @Data
 @Entity
-public class Reservation{
+public class Reservation {
     @Id
-    @GeneratedValue(strategy = GenerationType. IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotBlank
     @FutureOrPresent
-    private Date start;
+    private Date start; //UTC -> GMT-6
     @NotBlank
     @FutureOrPresent
     private Date end;
     private String payment;
-    @Enumerated (EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private Status status;
     @NotBlank
-    @ManyToOne
+    @ManyToOne //Por defecto tiene un Eager (población de datos)
     private User user;
     @NotBlank
     @ManyToOne

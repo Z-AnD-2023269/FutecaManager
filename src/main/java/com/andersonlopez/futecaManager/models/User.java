@@ -9,14 +9,16 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-@Entity
+@Entity //Es una entidad / Mapea desde Hibernate el modelo
 @AllArgsConstructor
+@NoArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     @NotBlank
     private String name;
     @NotBlank
@@ -30,6 +32,5 @@ public class User {
     private String email;
     @NotBlank
     private String password;
-    private String profilePicrure;
-
+    private String profilePicture;
 }

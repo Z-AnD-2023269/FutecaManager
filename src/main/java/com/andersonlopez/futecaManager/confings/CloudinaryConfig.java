@@ -6,16 +6,16 @@ import org.springframework.context.annotation.Configuration;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
-@Configuration
-public class CloudinaryConfing {
 
+
+@Configuration
+public class CloudinaryConfig {
     @Bean
     Cloudinary cloudinary(){
         return new Cloudinary(ObjectUtils.asMap(
-            "cloud_name", "dakswuxsc",
-            "api_key", "386879135494191",
-            "api_secret", "ubxvJmWQCN813pZgPc92HpqiWns"
+            "cloud_name", "dnd2hb0lg",
+                "api_key", "291356244168927",
+                "api_secret", "GAiTuo0TDtn14PKwbFlLuuFrdL0"
         ));
     }
-
 }
